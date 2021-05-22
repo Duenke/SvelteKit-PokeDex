@@ -1,6 +1,6 @@
 # Svelte-PokeDex
 
-Building yet another PokeDex with PokeAPI to explore the Svelte JS framework!
+Building yet another PokeDex with PokeAPI to explore the SvelteKit JS framework!
 Template info below:
 
 # create-svelte

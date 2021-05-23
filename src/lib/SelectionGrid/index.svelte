@@ -1,55 +1,28 @@
 <script>
+	import GridItem from "$lib/GridItem/index.svelte";
+
 	$: gridItems = [];
-	// $: console.log(gridItems);
 
-	const getApiData = (nextPage) => {
-		// gridItems = [];
-
-		fetch(nextPage)
+	const getPokeDexData = () => {
+		fetch("https://pokeapi.co/api/v2/pokemon/?limit=1000")
 			.then((response) => response.json())
 			.then((data) => {
-				let results = data.results;
-
-				gridItems = [...gridItems, ...results];
-
-				if (data.next != null) {
-					getApiData(data.next);
-				}
+				gridItems = data.results;
 			});
 	};
 </script>
 
-<svelte:head>
-	<title>PokeDex</title>
-</svelte:head>
+<button on:click={() => getPokeDexData()}>Call Pokemon!</button>
 
-<button on:click={() => getApiData("https://pokeapi.co/api/v2/pokemon/?limit=1")}
-	>Call Pokemon!</button
->
-
-{#each gridItems as item}
-	<div class="card">
-		<div class="container">
-			<h4><b>{item.name}</b></h4>
-			<p>{item.url}</p>
-		</div>
-	</div>
-{/each}
+<div>
+	{#each gridItems as item}
+		<GridItem name={item.name} url={item.url} />
+	{/each}
+</div>
 
 <style>
-	.card {
-		/* Add shadows to create the "card" effect */
-		box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
-		transition: 0.3s;
-	}
-
-	/* On mouse-over, add a deeper shadow */
-	.card:hover {
-		box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.2);
-	}
-
-	/* Add some padding inside the card container */
-	.container {
-		padding: 2px 16px;
+	div {
+		display: grid;
+		grid-template-columns: 1fr 1fr 1fr;
 	}
 </style>

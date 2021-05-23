@@ -6,7 +6,7 @@
 	$: gridItems = [];
 
 	onMount(() => {
-		fetch("https://pokeapi.co/api/v2/pokemon/?limit=100")
+		fetch("https://pokeapi.co/api/v2/pokemon/?limit=10000")
 			.then((response) => response.json())
 			.then((data) => {
 				gridItems = data.results;
@@ -18,7 +18,6 @@
 
 <div>
 	{#each gridItems as { name, url } (name)}
-		<!-- Making two API calls here, mostly to get the image...may refactor to hard-code the base url + Pokemon Id -->
 		<GridItem {name} {url} />
 	{/each}
 </div>

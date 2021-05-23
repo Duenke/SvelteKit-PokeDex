@@ -1,56 +1,34 @@
 <script>
 	import ProgressBar from "$lib/ProgressBar/index.svelte";
-	import SelectionModal from "$lib/SelectionModal/index.svelte"
+	import SelectionModal from "$lib/SelectionModal/index.svelte";
 
 	export let name;
 	export let url;
 	let hideModal = true;
-	let pokemonDetails = getPokemonDetails();
 
-	async function getPokemonDetails() {
-		const response = await fetch(url);
-		const details = await response.json();
+	const urlArray = url.split("/");
+	const indexLocation = urlArray.length - 2;
 
-		if (response.ok) {
-			return details;
-		} else {
-			throw new Error(details);
-		}
-	}
+	const index = urlArray[indexLocation];
 
+	const imgUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${index}.png`;
 </script>
 
-{#await pokemonDetails}
-	<div class="card">
-		<h1>{name}</h1>
-		<ProgressBar />
-	</div>
-{:then pokemon}
-	<div class="card" on:click={() => hideModal = !hideModal}>
-		<h1>{name}</h1>
-		<img src={pokemon.sprites.front_default} alt={name} />
-	</div>
+<div on:click={() => (hideModal = !hideModal)}>
+	<h1>{name}</h1>
+	<img src={imgUrl} alt={name} />
+</div>
 
-	<SelectionModal {hideModal} {pokemon} />	
-{:catch error}
-	<p class="error">{error.message}</p>
-{/await}
-
+<!-- <SelectionModal {hideModal} {pokemon} /> -->
 <style>
-	.error {
-		color: red;
-		font-weight: bold;
-		text-align: center;
-	}
-
-	.card {
+	div {
 		box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
 		transition: 0.3s;
 		padding: 2px 16px;
 		text-align: center;
 	}
 
-	.card:hover {
+	div:hover {
 		box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.2);
 	}
 </style>

@@ -1,46 +1,56 @@
 <script>
+	import ProgressBar from "$lib/ProgressBar/index.svelte";
+	import SelectionModal from "$lib/SelectionModal/index.svelte"
+
 	export let name;
 	export let url;
-
-	let itemDetails = getPokemonDetails();
+	let hideModal = true;
+	let pokemonDetails = getPokemonDetails();
 
 	async function getPokemonDetails() {
 		const response = await fetch(url);
-		const pokemonDetails = await response.json();
+		const details = await response.json();
 
 		if (response.ok) {
-			return pokemonDetails;
+			return details;
 		} else {
-			throw new Error(pokemonDetails);
+			throw new Error(details);
 		}
 	}
+
 </script>
 
-{#await itemDetails}
-	<p>...{name}</p>
+{#await pokemonDetails}
+	<div class="card">
+		<h1>{name}</h1>
+		<ProgressBar />
+	</div>
 {:then pokemon}
-	<div>
+	<div class="card" on:click={() => hideModal = !hideModal}>
 		<h1>{name}</h1>
 		<img src={pokemon.sprites.front_default} alt={name} />
 	</div>
+
+	<SelectionModal {hideModal} {pokemon} />	
 {:catch error}
-	<p style="color: red">{error.message}</p>
+	<p class="error">{error.message}</p>
 {/await}
 
 <style>
-    p {
-        text-align: center;
-        font-weight: bold;
-    }
+	.error {
+		color: red;
+		font-weight: bold;
+		text-align: center;
+	}
 
-	div {
+	.card {
 		box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
 		transition: 0.3s;
 		padding: 2px 16px;
-        text-align: center;
+		text-align: center;
 	}
 
-	div:hover {
+	.card:hover {
 		box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.2);
 	}
 </style>

@@ -1,5 +1,6 @@
 <script>
 	import GridItem from "$lib/GridItem/index.svelte";
+	import pokemonLogo from "../../../static/PokemonLogo.png";
 
 	$: gridItems = [];
 
@@ -12,6 +13,8 @@
 	};
 </script>
 
+<img src={pokemonLogo} alt="PokeApi" height="500" />
+
 <button on:click={() => getPokeDexData()}>Call Pokemon!</button>
 
 <div>
@@ -21,6 +24,10 @@
 </div>
 
 <style>
+	img {
+		height: 350px; /* crop the image whitespace vertically */
+		object-fit: cover;
+	}
 	div {
 		display: grid;
 		grid-template-columns: 1fr 1fr 1fr;

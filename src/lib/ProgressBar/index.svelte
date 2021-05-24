@@ -1,17 +1,19 @@
 <script>
-	import { tweened } from 'svelte/motion';
-	import { cubicOut } from 'svelte/easing';
-import { onMount } from 'svelte';
+	import { tweened } from "svelte/motion";
+	import { cubicOut } from "svelte/easing";
+	import { onMount } from "svelte";
+
+	export let timeoutIndex;
 
 	const progress = tweened(0, {
-		duration: 2500,
+		duration: timeoutIndex * 100 + 1000,
 		easing: cubicOut
 	});
 
-    onMount(() => progress.set(1))
+	onMount(() => progress.set(1));
 </script>
 
-<progress value={$progress}></progress>
+<progress value={$progress} />
 
 <style>
 	progress {

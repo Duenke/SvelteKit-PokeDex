@@ -1,12 +1,12 @@
 <script>
-	import GridItem from "$lib/GridItem/index.svelte";
 	import { onMount } from "svelte";
+	import GridItem from "$lib/GridItem/index.svelte";
 	import pokemonLogo from "../../../static/PokemonLogo.png";
 
 	$: gridItems = [];
 
 	onMount(() => {
-		fetch("https://pokeapi.co/api/v2/pokemon/?limit=10000")
+		fetch("https://pokeapi.co/api/v2/pokemon/?limit=10")
 			.then((response) => response.json())
 			.then((data) => {
 				gridItems = data.results;
@@ -14,11 +14,11 @@
 	});
 </script>
 
-<img src={pokemonLogo} alt="PokeApi" height="500" />
+<img src={pokemonLogo} alt="Pokemon" height="500" />
 
 <div>
-	{#each gridItems as { name, url } (name)}
-		<GridItem {name} {url} />
+	{#each gridItems as { name, url }, index (name)}
+		<GridItem {name} {url} gridIndex={index} />
 	{/each}
 </div>
 

@@ -31,7 +31,6 @@
 
 {#if !hideModal}
 	<SelectionModal
-		pokemonName={name}
 		{pokedexId}
 		on:destroyModal={(event) => (hideModal = event.detail.hideModal)}
 	/>

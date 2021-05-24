@@ -3,15 +3,11 @@
 	import { createEventDispatcher } from "svelte";
 
 	export let pokedexId;
-	export let pokemonName;
 
 	const dispatch = createEventDispatcher();
 
 	let pokemonDetails;
-	let loading = false;
 	let error;
-
-	$: getPokemon(pokedexId); // a hack version of onMount()
 
 	const TYPE_COLORS = {
 		bug: "green-200",
@@ -34,6 +30,14 @@
 		water: "blue-600"
 	};
 
+	function toTitleCase(string, splitChar) {
+		return string
+			.toLowerCase()
+			.split(splitChar)
+			.map((s) => s.charAt(0).toUpperCase() + s.substring(1))
+			.join(" ");
+	}
+
 	function getFlavorText(flavors) {
 		// RANDOM FLAVOR TEXT
 		let tempDescription = [];
@@ -46,14 +50,16 @@
 		return tempDescription[num];
 	}
 
-	async function getPokemon(pokedexId) {
+	async function getPokemonDetails(pokedexId) {
 		const pokemonURL = `https://pokeapi.co/api/v2/pokemon/${pokedexId}/`;
 		const pokemonSpeciesURL = `https://pokeapi.co/api/v2/pokemon-species/${pokedexId}/`;
 
 		try {
-			loading = true;
-			const pokemonGeneral = await ky.get(pokemonURL).json();
-			const pokemonSpecies = await ky.get(pokemonSpeciesURL).json();
+			const pokemonGeneralResponse = await fetch(pokemonURL);
+			const pokemonGeneral = await pokemonGeneralResponse.json();
+
+			const pokemonSpeciesResponse = await fetch(pokemonSpeciesURL);
+			const pokemonSpecies = await pokemonSpeciesResponse.json();
 
 			const { name, types, sprites, stats, abilities, height, weight } = pokemonGeneral;
 
@@ -118,8 +124,6 @@
 			// Species Variety
 			const species = genera.filter((g) => g.language.name === "en")[0].genus;
 
-			loading = false;
-
 			pokemonDetails = {
 				name: toTitleCase(name, " "),
 				types: types.map((type) => ({
@@ -141,8 +145,9 @@
 				pokemonTheme,
 				species
 			};
+
+			return pokemonDetails;
 		} catch (error) {
-			loading = false;
 			error = error;
 		}
 	}
@@ -153,135 +158,140 @@
 		});
 	}
 
-	// onMount((pokemonDetails = getPokemonDetails()));
+	onMount(() => pokemonDetails = getPokemonDetails(pokedexId));
 </script>
 
 <div class="modal-container">
 	<button on:click={destroySelf}>X</button>
-	<div class="border border-gray-500 rounded-lg overflow-hidden">
-		<!-- <pre>{JSON.stringify(pokemon, null, 2)}</pre> -->
-		<header class="flex justify-between p-4 bg-gray-200 border-b border-gray-500">
-			<h1 class="text-lg">{pokemonName}</h1>
+	{#await pokemonDetails}
+		LOADING...
+	{:then pokemonDetails}
+		<div>
+			<pre>{JSON.stringify(pokemonDetails, null, 2)}</pre>
+			<!-- <header>
+				<h1>{pokemonDetails.name}</h1>
+				<div>
+					{#each pokemonDetails.types as type (type.name)}
+						<span class={type.color}>
+							{type.name}
+						</span>
+					{/each}
+				</div>
+			</header>
+
 			<div>
-				{#each pokemonDetails.types as type (type.name)}
-					<span
-						class="inline-block ml-1 py-1 px-2 text-xs text-white tracking-wide
-                rounded-full bg-{type.color}"
-					>
-						{type.name}
-					</span>
-				{/each}
-			</div>
-		</header>
-        {@debug pokemonDetails}
-		<div class="p-4">
-			<p>{pokemonDetails.description}</p>
+				<p>{pokemonDetails.description}</p>
 
-			<div class="grid grid-cols-8 gap-2">
-				<!-- <PokemonSprites sprites={pokemonDetails.sprites} /> -->
-			</div>
+				<div>
+					<PokemonSprites sprites={pokemonDetails.sprites} />
+				</div>
 
-			<div class="flex flex-col lg:flex-row mt-6">
-				<div class="w-full lg:w-7/12">
-					<section>
-						<h2 class="text-lg font-bold">Profile</h2>
-						<dl class="flex flex-wrap text-sm">
-							<dt class="w-5/12">Species:</dt>
-							<dd class="flex-grow w-7/12">{pokemonDetails.species}</dd>
-							<dt class="w-5/12">Height:</dt>
-							<dd class="flex-grow w-7/12">
-								{pokemonDetails.height / 10} m ({Math.round(
-									(pokemonDetails.height * 0.328084 + 0.00001) * 100
-								) / 100}
-								lb)
-							</dd>
-							<dt class="w-5/12">Weight:</dt>
-							<dd class="flex-grow w-7/12">
-								{pokemonDetails.weight / 10} kg ({Math.round(
-									(pokemonDetails.weight * 0.220462 + 0.00001) * 100
-								) / 100}
-								lb)
-							</dd>
-							<dt class="w-5/12">Abilities:</dt>
-							<dd class="flex-grow w-7/12">{pokemonDetails.abilities}</dd>
-						</dl>
-					</section>
+				<div>
+					<div>
+						<section>
+							<h2>Profile</h2>
+							<dl>
+								<dt>Species:</dt>
+								<dd>{pokemonDetails.species}</dd>
+								<dt>Height:</dt>
+								<dd>
+									{pokemonDetails.height / 10} m ({Math.round(
+										(pokemonDetails.height * 0.328084 + 0.00001) * 100
+									) / 100}
+									lb)
+								</dd>
+								<dt>Weight:</dt>
+								<dd>
+									{pokemonDetails.weight / 10} kg ({Math.round(
+										(pokemonDetails.weight * 0.220462 + 0.00001) * 100
+									) / 100}
+									lb)
+								</dd>
+								<dt>Abilities:</dt>
+								<dd>{pokemonDetails.abilities}</dd>
+							</dl>
+						</section>
 
-					<section class="mt-6">
-						<h2 class="text-lg font-bold">Training Stats</h2>
-						<dl class="flex flex-wrap text-sm">
-							<dt class="w-5/12">EV Yield:</dt>
-							<dd class="flex-grow w-7/12">{pokemonDetails.evs}</dd>
-							<dt class="w-5/12">Capture Rate:</dt>
-							<dd class="flex-grow w-7/12">{pokemonDetails.captureRate}</dd>
-							<dt class="w-5/12">Growth Rate:</dt>
-							<dd class="flex-grow w-7/12">{pokemonDetails.growthRate}</dd>
-						</dl>
-					</section>
+						<section>
+							<h2>Training Stats</h2>
+							<dl>
+								<dt>EV Yield:</dt>
+								<dd>{pokemonDetails.evs}</dd>
+								<dt>Capture Rate:</dt>
+								<dd>{pokemonDetails.captureRate}</dd>
+								<dt>Growth Rate:</dt>
+								<dd>{pokemonDetails.growthRate}</dd>
+							</dl>
+						</section>
 
-					<section class="mt-6">
-						<h2 class="text-lg font-bold">Breeding Stats</h2>
-						<dl class="flex flex-wrap text-sm">
-							<div class="flex items-center justify-center w-full">
-								<dt class="w-5/12">Gender Ratio (%F / %M):</dt>
-								<div class="w-7/12">
-									<dd class="flex flex-grow h-4">
-										<!-- <DataBar
+						<section>
+							<h2>Breeding Stats</h2>
+							<dl>
+								<div>
+									<dt>Gender Ratio (%F / %M):</dt>
+									<div>
+										<dd>
+											<DataBar
                           value={pokemonDetails.genderRatio.female}
                           statColor={femaleColor}
                         />
                         <DataBar
                           value={pokemonDetails.genderRatio.male}
                           statColor={maleColor}
-                        /> -->
-									</dd>
+                        />
+										</dd>
+									</div>
 								</div>
-							</div>
-							<dt class="w-5/12">Egg Groups:</dt>
-							<dd class="flex-grow w-7/12">
-								{#each pokemonDetails.eggGroups as egg}{egg}{/each}
-							</dd>
-						</dl>
-					</section>
-				</div>
+								<dt>Egg Groups:</dt>
+								<dd>
+									{#each pokemonDetails.eggGroups as egg}{egg}{/each}
+								</dd>
+							</dl>
+						</section>
+					</div>
 
-				<div class="w-full lg:w-5/12">
-					<section class="mt-6 lg:mt-0">
-						<h2 class="text-lg font-bold">Base Stats</h2>
-						<dl>
-							{#each pokemonDetails.stats as stat}
-								<div class="flex items-center">
-									<dt class="w-4/12">{stat.name}</dt>
-									<dd class="w-7/12 h-4 text-sm bg-gray-200 rounded">
-										<!-- <DataBar
+					<div>
+						<section>
+							<h2>Base Stats</h2>
+							<dl>
+								{#each pokemonDetails.stats as stat}
+									<div>
+										<dt>{stat.name}</dt>
+										<dd>
+											<DataBar
                           value={stat.base_stat}
                           statColor={pokemonDetails.pokemonTheme}
-                        /> -->
-									</dd>
-								</div>
-							{/each}
-						</dl>
-					</section>
+                        />
+										</dd>
+									</div>
+								{/each}
+							</dl>
+						</section>
+					</div>
 				</div>
 			</div>
-		</div>
 
-		<footer class="flex justify-center w-full p-4 border-t border-gray-500">
-			{#if pokemonDetails.evolvesFrom}
-				<p>
-					{pokemonName} evolves from
-					<!-- <Link to="/{pokemonDetails.evolvesFrom.url}">
+			<footer>
+				{#if pokemonDetails.evolvesFrom}
+					<p>
+						{pokemonDetails.name} evolves from
+						<Link to="/{pokemonDetails.evolvesFrom.url}">
                 <span class="underline">{pokemonDetails.evolvesFrom.name}</span>
-              </Link> -->
-				</p>
-			{:else}
-				<p>{pokemonName} does not evolve from another Pokemon</p>
-			{/if}
-		</footer>
-	</div>
+              </Link>
+					</p>
+				{:else}
+					<p>{pokemonDetails.name} does not evolve from another Pokemon</p>
+				{/if}
+			</footer> -->
+		</div>
+	{/await}
 </div>
 
 <style>
+	header {
+		display: flex;
+		flex-direction: row;
+	}
 	button {
 		color: grey;
 		float: right;
@@ -304,6 +314,7 @@
 		top: 5%;
 		height: 90%;
 		width: 90%;
+		overflow-y: auto;
 		background-color: aliceblue;
 	}
 </style>

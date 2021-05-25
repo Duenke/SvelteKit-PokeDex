@@ -3,10 +3,10 @@
 	import { cubicOut } from "svelte/easing";
 	import { onMount } from "svelte";
 
-	export let timeoutIndex;
+	export let loadTime;
 
 	const progress = tweened(0, {
-		duration: timeoutIndex * 100 + 1000,
+		duration: loadTime,
 		easing: cubicOut
 	});
 

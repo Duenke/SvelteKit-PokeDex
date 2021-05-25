@@ -1,33 +1,34 @@
 <script>
 	import { onMount } from "svelte";
 	import { createEventDispatcher } from "svelte";
+	import DataBar from "./DataBar.svelte";
+	import PokemonSprites from "./PokemonSprites.svelte";
 
 	export let pokedexId;
 
-	const dispatch = createEventDispatcher();
+	let pokemonDetails = getPokemonDetails(pokedexId);
 
-	let pokemonDetails;
-	let error;
-
+	const femaleColor = "pink";
+	const maleColor = "blue";
 	const TYPE_COLORS = {
-		bug: "green-200",
-		dark: "orange-900",
-		dragon: "purple-600",
-		electric: "orange-400",
-		fairy: "pink-300",
-		fighting: "orange-800",
-		fire: "red-600",
-		flying: "purple-400",
-		ghost: "purple-700",
-		grass: "green-400",
-		ground: "yellow-500",
-		ice: "teal-200",
-		normal: "orange-300",
-		poison: "purple-800",
-		psychic: "red-500",
-		rock: "yellow-700",
-		steel: "gray-400",
-		water: "blue-600"
+		bug: "green",
+		dark: "orange",
+		dragon: "purple",
+		electric: "orange",
+		fairy: "pink",
+		fighting: "orange",
+		fire: "red",
+		flying: "purple",
+		ghost: "purple",
+		grass: "green",
+		ground: "yellow",
+		ice: "teal",
+		normal: "orange",
+		poison: "purple",
+		psychic: "red",
+		rock: "yellow",
+		steel: "gray",
+		water: "blue"
 	};
 
 	function toTitleCase(string, splitChar) {
@@ -57,9 +58,15 @@
 		try {
 			const pokemonGeneralResponse = await fetch(pokemonURL);
 			const pokemonGeneral = await pokemonGeneralResponse.json();
+			if (!pokemonGeneralResponse.ok) {
+				throw new Error(pokemonGeneral);
+			}
 
 			const pokemonSpeciesResponse = await fetch(pokemonSpeciesURL);
 			const pokemonSpecies = await pokemonSpeciesResponse.json();
+			if (!pokemonSpeciesResponse.ok) {
+				throw new Error(pokemonSpecies);
+			}
 
 			const { name, types, sprites, stats, abilities, height, weight } = pokemonGeneral;
 
@@ -124,7 +131,7 @@
 			// Species Variety
 			const species = genera.filter((g) => g.language.name === "en")[0].genus;
 
-			pokemonDetails = {
+			return {
 				name: toTitleCase(name, " "),
 				types: types.map((type) => ({
 					name: toTitleCase(type.type.name, " "),
@@ -145,70 +152,69 @@
 				pokemonTheme,
 				species
 			};
-
-			return pokemonDetails;
 		} catch (error) {
-			error = error;
+			throw new Error(error);
 		}
 	}
 
+	const dispatch = createEventDispatcher();
+
+	// I didn't have to do it like this, but I wanted to use this feature!
 	function destroySelf() {
 		dispatch("destroyModal", {
 			hideModal: true
 		});
 	}
-
-	onMount(() => pokemonDetails = getPokemonDetails(pokedexId));
 </script>
 
 <div class="modal-container">
-	<button on:click={destroySelf}>X</button>
-	{#await pokemonDetails}
-		LOADING...
-	{:then pokemonDetails}
-		<div>
-			<pre>{JSON.stringify(pokemonDetails, null, 2)}</pre>
-			<!-- <header>
-				<h1>{pokemonDetails.name}</h1>
-				<div>
-					{#each pokemonDetails.types as type (type.name)}
-						<span class={type.color}>
+	<div class="modal-inner">
+		<button on:click={destroySelf}>X</button>
+		{#await pokemonDetails}
+			LOADING...
+		{:then details}
+			<!-- <pre>{JSON.stringify(details, null, 2)}</pre> -->
+			<header>
+				<span>
+					<h1>{details.name}</h1>
+					{#each details.types as type (type.name)}
+						<span class="type" style="background-color: {type.color}">
 							{type.name}
 						</span>
 					{/each}
-				</div>
+				</span>
 			</header>
 
 			<div>
-				<p>{pokemonDetails.description}</p>
+				<h2>{details.description}</h2>
 
 				<div>
-					<PokemonSprites sprites={pokemonDetails.sprites} />
+					<PokemonSprites sprites={details.sprites} />
 				</div>
 
 				<div>
-					<div>
+					<div class="stats">
 						<section>
 							<h2>Profile</h2>
 							<dl>
 								<dt>Species:</dt>
-								<dd>{pokemonDetails.species}</dd>
+								<dd>{details.species}</dd>
 								<dt>Height:</dt>
 								<dd>
-									{pokemonDetails.height / 10} m ({Math.round(
-										(pokemonDetails.height * 0.328084 + 0.00001) * 100
+									{details.height / 10} m ({Math.round(
+										(details.height * 0.328084 + 0.00001) * 100
 									) / 100}
 									lb)
 								</dd>
 								<dt>Weight:</dt>
 								<dd>
-									{pokemonDetails.weight / 10} kg ({Math.round(
-										(pokemonDetails.weight * 0.220462 + 0.00001) * 100
+									{details.weight / 10} kg ({Math.round(
+										(details.weight * 0.220462 + 0.00001) * 100
 									) / 100}
 									lb)
 								</dd>
 								<dt>Abilities:</dt>
-								<dd>{pokemonDetails.abilities}</dd>
+								<dd>{details.abilities}</dd>
 							</dl>
 						</section>
 
@@ -216,11 +222,11 @@
 							<h2>Training Stats</h2>
 							<dl>
 								<dt>EV Yield:</dt>
-								<dd>{pokemonDetails.evs}</dd>
+								<dd>{details.evs}</dd>
 								<dt>Capture Rate:</dt>
-								<dd>{pokemonDetails.captureRate}</dd>
+								<dd>{details.captureRate}</dd>
 								<dt>Growth Rate:</dt>
-								<dd>{pokemonDetails.growthRate}</dd>
+								<dd>{details.growthRate}</dd>
 							</dl>
 						</section>
 
@@ -231,37 +237,26 @@
 									<dt>Gender Ratio (%F / %M):</dt>
 									<div>
 										<dd>
-											<DataBar
-                          value={pokemonDetails.genderRatio.female}
-                          statColor={femaleColor}
-                        />
-                        <DataBar
-                          value={pokemonDetails.genderRatio.male}
-                          statColor={maleColor}
-                        />
+											<DataBar value={details.genderRatio.female} statColor={femaleColor} />
+											<DataBar value={details.genderRatio.male} statColor={maleColor} />
 										</dd>
 									</div>
 								</div>
 								<dt>Egg Groups:</dt>
 								<dd>
-									{#each pokemonDetails.eggGroups as egg}{egg}{/each}
+									{#each details.eggGroups as egg}{egg}{/each}
 								</dd>
 							</dl>
 						</section>
-					</div>
 
-					<div>
 						<section>
 							<h2>Base Stats</h2>
 							<dl>
-								{#each pokemonDetails.stats as stat}
+								{#each details.stats as stat}
 									<div>
 										<dt>{stat.name}</dt>
 										<dd>
-											<DataBar
-                          value={stat.base_stat}
-                          statColor={pokemonDetails.pokemonTheme}
-                        />
+											<DataBar value={stat.base_stat} statColor={details.pokemonTheme} />
 										</dd>
 									</div>
 								{/each}
@@ -272,19 +267,18 @@
 			</div>
 
 			<footer>
-				{#if pokemonDetails.evolvesFrom}
-					<p>
-						{pokemonDetails.name} evolves from
-						<Link to="/{pokemonDetails.evolvesFrom.url}">
-                <span class="underline">{pokemonDetails.evolvesFrom.name}</span>
-              </Link>
-					</p>
+				{#if details.evolvesFrom}
+					<h2>
+						{details.name} evolves from {details.evolvesFrom.name}
+					</h2>
 				{:else}
-					<p>{pokemonDetails.name} does not evolve from another Pokemon</p>
+					<h2>{details.name} does not evolve from another Pokemon</h2>
 				{/if}
-			</footer> -->
-		</div>
-	{/await}
+			</footer>
+		{:catch error}
+			<p style="color: red">{error.message}</p>
+		{/await}
+	</div>
 </div>
 
 <style>
@@ -292,8 +286,15 @@
 		display: flex;
 		flex-direction: row;
 	}
+
+	h2 {
+		font-weight: bold;
+	}
+
 	button {
 		color: grey;
+		background-color: transparent;
+		border-color: transparent;
 		float: right;
 		font-size: 28px;
 		font-weight: bold;
@@ -301,20 +302,38 @@
 
 	button:hover,
 	button:focus {
-		color: black;
+		color: red;
 		text-decoration: none;
 		cursor: pointer;
 	}
 
 	.modal-container {
-		border-radius: 5%;
 		position: fixed;
 		z-index: 1;
+		border-radius: 5%;
 		left: 5%;
 		top: 5%;
 		height: 90%;
 		width: 90%;
 		overflow-y: auto;
 		background-color: aliceblue;
+		box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+	}
+
+	.modal-inner {
+		padding: 1%;
+	}
+
+	.stats {
+		display: grid;
+		grid-template-columns: 1fr 1fr 1fr 1fr;
+		border-style: groove;
+		box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+	}
+
+	.type {
+		color: aliceblue;
+		border-radius: 15% 0 15% 0;
+		padding: 2px;
 	}
 </style>

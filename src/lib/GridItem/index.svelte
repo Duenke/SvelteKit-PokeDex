@@ -7,6 +7,7 @@
 	export let url;
 	export let gridIndex;
 
+	let loadTime = (gridIndex < 10 ? gridIndex : 10) * 100 + 1000
 	let hideModal = true;
 	let fakeLoadingForStylePoints = true;
 
@@ -17,12 +18,12 @@
 	onMount(() => {
 		setTimeout(() => {
 			fakeLoadingForStylePoints = false;
-		}, gridIndex * 100 + 1000);
+		}, loadTime);
 	});
 </script>
 
 <div class="card" on:click={() => (hideModal = !hideModal)}>
-	<ProgressBar timeoutIndex={gridIndex} />
+	<ProgressBar {loadTime} />
 	<div hidden={fakeLoadingForStylePoints}>
 		<h1>{name}</h1>
 		<img src={imgUrl} alt={name} />
@@ -42,6 +43,7 @@
 		transition: 0.3s;
 		padding: 2px 16px;
 		text-align: center;
+		min-height: 5rem;
 	}
 
 	.card:hover {

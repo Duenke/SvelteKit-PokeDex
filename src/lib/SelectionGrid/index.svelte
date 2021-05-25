@@ -6,7 +6,7 @@
 	$: gridItems = [];
 
 	onMount(() => {
-		fetch("https://pokeapi.co/api/v2/pokemon/?limit=10")
+		fetch("https://pokeapi.co/api/v2/pokemon/?limit=151")
 			.then((response) => response.json())
 			.then((data) => {
 				gridItems = data.results;

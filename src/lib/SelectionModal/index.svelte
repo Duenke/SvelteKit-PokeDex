@@ -56,14 +56,19 @@
 		const pokemonSpeciesURL = `https://pokeapi.co/api/v2/pokemon-species/${pokedexId}/`;
 
 		try {
-			const pokemonGeneralResponse = await fetch(pokemonURL);
-			const pokemonGeneral = await pokemonGeneralResponse.json();
+			const [pokemonGeneralResponse, pokemonSpeciesResponse] = await Promise.all([
+				fetch(pokemonURL),
+				fetch(pokemonSpeciesURL)
+			]);
+			// I want to make these sets of API calls in parallel because the second set depends on the first.
+			const [pokemonGeneral, pokemonSpecies] = await Promise.all([
+				pokemonGeneralResponse.json(),
+				pokemonSpeciesResponse.json()
+			]);
+
 			if (!pokemonGeneralResponse.ok) {
 				throw new Error(pokemonGeneral);
 			}
-
-			const pokemonSpeciesResponse = await fetch(pokemonSpeciesURL);
-			const pokemonSpecies = await pokemonSpeciesResponse.json();
 			if (!pokemonSpeciesResponse.ok) {
 				throw new Error(pokemonSpecies);
 			}
